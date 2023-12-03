@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
-#include "base.h"
+#include "aeroflot.h"
 #include "keeper.h"
 
 Keeper::Keeper() : head_(nullptr), tail_(nullptr) {}
@@ -22,7 +22,7 @@ Keeper::~Keeper() {
     }
 }
 
-void Keeper::add(Base* obj) {
+void Keeper::add(Aeroflot* obj) {
     Node* node = new Node(obj);
     if (!head_) {
         head_ = node;
@@ -33,6 +33,7 @@ void Keeper::add(Base* obj) {
         node->prev = tail_;
         tail_ = node;
     }
+    sortByDestination();
 }
 
 void Keeper::remove(int index) {
@@ -75,82 +76,88 @@ void Keeper::change(int index)
 {
 
     if (index < 0 || index >= getSize()) {
-        throw out_of_range("Index out of range");
+        throw "Заданного элемента несуществует";
     }
     Node* current = head_;
     for (int i = 0; i < index; ++i) {
         current = current->next;
     }
-    current->data->change();
-}
-void Keeper::load()
-{
-    string buf;
-    ifstream fin("data.txt");
-    if (!fin.is_open()) {
-        throw out_of_range("Error opening file");
-    }
-    string type, name, weapon_type, evil_deed, habitat, skills, desc;
-    while (fin >> type) {
-        if (type == "Hero") {
-            getline(fin, buf);
-            getline(fin, name);
-            getline(fin, weapon_type);
-            getline(fin, skills);
-
-            Hero* hero = new Hero(name, weapon_type, skills);
-            this->add(hero);
-        }
-        else if (type == "Villain") {
-            getline(fin, buf);
-            getline(fin, name);
-            getline(fin, weapon_type);
-            getline(fin, skills);
-            getline(fin, habitat);
-            getline(fin, evil_deed);
-            Villain* vill = new Villain(name, weapon_type, skills, habitat, evil_deed);
-            this->add(vill);
-        }
-        else if (type == "Monster") {
-            getline(fin, buf);
-            getline(fin, name);
-            getline(fin, desc);
-            Monster* monster = new Monster(name, desc);
-            this->add(monster);
-        }
-    }
-    fin.close();
-}
-void Keeper::save() {
-    ofstream file("data.txt");
-    if (!file.is_open()) {
-        throw out_of_range("Error opening file");
-    }
-    file.close();
-    Node* current = head_;
-    while (current != nullptr)
+    string u;
+    cout << "Введите номер изменяемого параметра:\n1. Место назначения\n2. Номер рейса\n3. Тип самолета" << endl;
+    cin >> u;
+    if (u == "1")
     {
-        current->data->save();
+        string dest_;
+        cout << "Введите новый пункт назначения: " << endl;
+        cin.get();
+        getline(cin, dest_);
+        current->data->setDest(dest_);
+    }
+    else if (u == "2")
+    {
+        string num_;
+        cout << "Введите новый номер рейса: " << endl;
+        cin.get();
+        getline(cin, num_);
+        current->data->setNum(num_);
+    }
+    else if (u == "3")
+    {
+        string type_;
+        cout << "Введите новый тип самолета: " << endl;
+        cin.get();
+        getline(cin, type_);
+        current->data->setType(type_);
+    }
+    else
+    {
+        throw "Неверный номер изменяемого параметра!";
+    }
+}
+void Keeper::sortByDestination() {
+    for (Node* i = head_; i != nullptr; i = i->next) {
+        for (Node* j = i->next; j != nullptr; j = j->next) {
+            if (i->data->getDest() > j->data->getDest()) {
+                // Обмен местами данных в узлах
+                Aeroflot* temp = i->data;
+                i->data = j->data;
+                j->data = temp;
+            }
+        }
+    }
+}
+void Keeper::search()
+{
+    int count = 0;
+    Node* current = head_;
+    string stype;
+    cout << "Введите тип самолета: " << endl;
+    cin.get();
+    getline(cin, stype);
+    while (current) {
+        if (current->data->getType() == stype)
+        {
+            cout << *current->data << endl;
+            count++;
+        }
         current = current->next;
     }
-    
-}
-void Keeper::print(){
-    int i = 1;
-    if (head_ == nullptr)
+    if (count == 0)
     {
-        cout << "Данные отсутствуют\n" << endl;
-        return;
+        cout << "Рейсы, обслуживаемые данным самолетом, отсутствуют" << endl;
     }
-    Node* curr = head_;
-    while (curr != tail_) {
-        cout << i << ") ";
-        curr->data->print();
-        curr = curr->next;
+}
+void Keeper::print() { 
+    Node* current = head_;
+    int i = 1;
+    while (current) {
+        //cout << "Plane Type: " << current->data->getType() << ", Flight Number: " << current->data->getNum() << ", Destination: " << current->data->getDest() << endl;
+        cout << i << ")";
+        //Aeroflot *ae = current->data;
+        cout << *current->data;
         i++;
+        current = current->next;
     }
-    cout<<i<<") ";
-    curr->data->print();
 }
 void Keeper::operator--()
 {
@@ -169,4 +176,4 @@ void Keeper::operator--()
         return;
     }
 }
-Keeper::Node::Node(Base* obj) : data(obj), prev(nullptr), next(nullptr) {}
+Keeper::Node::Node(Aeroflot* obj) : data(obj), prev(nullptr), next(nullptr) {}
